@@ -17,11 +17,12 @@ _error_exit(){
 file_input=$1
 
 OPTIND=1
-while getopts "hep:" opt ; do
+while getopts "hep:c:" opt ; do
     case "${opt}" in
         h) usage ;;
         p) runtype="photo" file_input="$2";;
         e) runtype="edit";;
+        c) runtype="crop" file_input="$2";;
         *)
     esac
 done
@@ -61,6 +62,25 @@ mkdir "$(dirname "$file_input")/${orig_base%.*}/logs"
 mkdir "$(dirname "$file_input")/${orig_base%.*}/logs/fileMeta"
 mkdir "$(dirname "$file_input")/${orig_base%.*}/objects"
 mkdir "$(dirname "$file_input")/${orig_base%.*}/objects/access"
+
+if [[ "${runtype}" = "crop" ]] ; then
+    c=1
+    while (( "$c" <= 1 )); do
+    mpv "$file_input" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b][t4]overlay=10:10[vo]
+    echo "try again? y or n"
+    read crop_choice
+if [[ "${crop_choice}" = "y" ]] ; then
+        c=1
+    else
+    c=$(($c + 1))
+fi
+
+  done  
+fi
 
 if [[ "${runtype}" = "photo" ]] ; then
 #take pictures
