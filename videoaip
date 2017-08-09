@@ -20,7 +20,6 @@ OPTIND=1
 while getopts "hep:c:" opt ; do
     case "${opt}" in
         h) usage ;;
-        p) runtype="photo" file_input="$2";;
         e) runtype="edit";;
         c) runtype="crop" file_input="$2";;
         *)
@@ -81,35 +80,6 @@ fi
 
   done  
 fi
-
-if [[ "${runtype}" = "photo" ]] ; then
-#take pictures
-Echo "How many pictures will you take?"
-read pic_num
-i=1
-while [ "$i" -le "$pic_num" ]; do
-
-Echo "Press enter to activate camera, then press escape to take picture"
-read null_response
-ffplay -window_title "Press Escape When Ready To Take Picture" -f avfoundation -i "default"
-imagesnap - | ffmpeg -i - -compression_algo raw -pix_fmt rgb24 "$(dirname "$file_input")/${orig_base%.*}/objects/${orig_base%.*}_0"$i".tiff" && ffplay -window_title "Press Escape When Ready To Continue" "$(dirname "$file_input")/${orig_base%.*}/objects/${orig_base%.*}_0"$i".tiff"
-echo "Enter q to quit, r to retake or enter continue"
-read followquery
-
-if [[ "${followquery}" == "q" ]] ; then
-    exit
-fi
-
-if [[ "${followquery}" == "r" ]] ; then
-    rm $(dirname $file_input)/${orig_base%.*}/objects/${orig_base%.*}_0"$i".tiff
-else
-i=$(($i + 1))
-fi
-done
-
-fi
-
-
 
 #create metadata and derivative files
 mediainfo --output=PBCore2 "$file_input" > "$(dirname "$file_input")/${orig_base%.*}/logs/fileMeta/${orig_base%.*}_pbcoreinstantiation.xml"
