@@ -20,7 +20,6 @@ OPTIND=1
 while getopts "hep:c:" opt ; do
     case "${opt}" in
         h) usage ;;
-        p) runtype="photo" file_input="$2";;
         e) runtype="edit";;
         c) runtype="crop" file_input="$2";;
         *)
@@ -56,17 +55,19 @@ fi
 orig_base=$(basename "$file_input")
 deriv_name="${file_input%.*}.mov"
 mp4_name="${file_input%.*}.mp4"
-mkdir "$(dirname "$file_input")/${orig_base%.*}" || _error_exit "Directory already exists. Exiting..."
-mkdir "$(dirname "$file_input")/${orig_base%.*}/metadata"
-mkdir "$(dirname "$file_input")/${orig_base%.*}/logs"
-mkdir "$(dirname "$file_input")/${orig_base%.*}/logs/fileMeta"
-mkdir "$(dirname "$file_input")/${orig_base%.*}/objects"
-mkdir "$(dirname "$file_input")/${orig_base%.*}/objects/access"
+mediaid="${orig_base%.*}"
+targetdirectory=$(dirname "${file_input}")
+mkdir "${targetdirectory}/${mediaid}" || _error_exit "Directory already exists. Exiting..."
+mkdir "${targetdirectory}/${mediaid}/metadata"
+mkdir "${targetdirectory}/${mediaid}/logs"
+mkdir "${targetdirectory}/${mediaid}/logs/fileMeta"
+mkdir "${targetdirectory}/${mediaid}/objects"
+mkdir "${targetdirectory}/${mediaid}/objects/access"
 
 if [[ "${runtype}" = "crop" ]] ; then
     c=1
     while (( "$c" <= 1 )); do
-    mpv "$file_input" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    mpv --keep-open=yes --title="Preview" "$file_input" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
     text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
     text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
     text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
@@ -82,54 +83,26 @@ fi
   done  
 fi
 
-if [[ "${runtype}" = "photo" ]] ; then
-#take pictures
-Echo "How many pictures will you take?"
-read pic_num
-i=1
-while [ "$i" -le "$pic_num" ]; do
-
-Echo "Press enter to activate camera, then press escape to take picture"
-read null_response
-ffplay -window_title "Press Escape When Ready To Take Picture" -f avfoundation -i "default"
-imagesnap - | ffmpeg -i - -compression_algo raw -pix_fmt rgb24 "$(dirname "$file_input")/${orig_base%.*}/objects/${orig_base%.*}_0"$i".tiff" && ffplay -window_title "Press Escape When Ready To Continue" "$(dirname "$file_input")/${orig_base%.*}/objects/${orig_base%.*}_0"$i".tiff"
-echo "Enter q to quit, r to retake or enter continue"
-read followquery
-
-if [[ "${followquery}" == "q" ]] ; then
-    exit
-fi
-
-if [[ "${followquery}" == "r" ]] ; then
-    rm $(dirname $file_input)/${orig_base%.*}/objects/${orig_base%.*}_0"$i".tiff
-else
-i=$(($i + 1))
-fi
-done
-
-fi
-
-
-
 #create metadata and derivative files
-mediainfo --output=PBCore2 "$file_input" > "$(dirname "$file_input")/${orig_base%.*}/logs/fileMeta/${orig_base%.*}_pbcoreinstantiation.xml"
-ffmpeg -i "$file_input" -c:v prores "$deriv_name" "$mp4_name" 
-
+mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
+mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
+if ! [ -e "$mp4_name" ] ; then
+    ffmpeg -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1 "$mp4_name" 
+fi
 #sync access mp4 if selected
 if [[ "${derivative_choice}" = "Y" ]] ; then
     echo -e "\033[1;32mSyncing access copy to  "$destination" \033[0m"
     rsync -Pa "$mp4_name" "$derivative_destination"
 fi
 
-#create checksum
-md5deep -b "$file_input" > "$(dirname "$file_input")/${orig_base%.*}/metadata/${orig_base%.*}.md5"
-
 #move files
-mv "$file_input" "$(dirname "$file_input")/${orig_base%.*}/objects"
-mv "$deriv_name" "$(dirname "$file_input")/${orig_base%.*}/objects"
-mv "$mp4_name" "$(dirname "$file_input")/${orig_base%.*}/objects/access"
+rsync "$file_input" "${targetdirectory}/${mediaid}/objects"
+rsync --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
 
-package="$(dirname "$file_input")/${orig_base%.*}"
+package="${targetdirectory}/${mediaid}"
+
+#create checksum
+md5deep -bcr "$package" > "$package/metadata/${mediaid}.md5"
 
 #Run Bagit
 bagit baginplace "$package"
