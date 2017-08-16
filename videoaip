@@ -85,8 +85,9 @@ fi
 
 #create metadata and derivative files
 mediainfo --output=PBCore2 "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}_pbcoreinstantiation.xml"
-ffmpeg -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1 "$mp4_name" 
-
+if ! [ -e "$mp4_name" ] ; then
+    ffmpeg -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1 "$mp4_name" 
+fi
 #sync access mp4 if selected
 if [[ "${derivative_choice}" = "Y" ]] ; then
     echo -e "\033[1;32mSyncing access copy to  "$destination" \033[0m"
