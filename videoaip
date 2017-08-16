@@ -84,7 +84,8 @@ fi
 fi
 
 #create metadata and derivative files
-mediainfo --output=PBCore2 "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}_pbcoreinstantiation.xml"
+mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
+mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
 if ! [ -e "$mp4_name" ] ; then
     ffmpeg -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1 "$mp4_name" 
 fi
@@ -94,14 +95,14 @@ if [[ "${derivative_choice}" = "Y" ]] ; then
     rsync -Pa "$mp4_name" "$derivative_destination"
 fi
 
-#create checksum
-md5deep -b "$file_input" > "${targetdirectory}/${mediaid}/metadata/${mediaid}.md5"
-
 #move files
 rsync "$file_input" "${targetdirectory}/${mediaid}/objects"
 rsync --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
 
 package="${targetdirectory}/${mediaid}"
+
+#create checksum
+md5deep -bcr "$package" > "$package/metadata/${mediaid}.md5"
 
 #Run Bagit
 bagit baginplace "$package"
