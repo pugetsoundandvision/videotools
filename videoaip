@@ -71,24 +71,23 @@ fi
 
 #crop mode
 if [[ "${runtype}" = "crop" ]] ; then
-    _set_up_trim "${file_input}"
-    cropdetect=$(ffmpeg -ss 30 -i "${file_input}" -vf cropdetect -hide_banner -an -t 10 -f null -  2>&1 | grep crop= | cut -d' ' -f 14- | sort | uniq -c | sort | tail -n1 | cut -d'=' -f2-)
+    cropdetect=$(ffmpeg -ss 15 -i "${file_input}" -vf cropdetect -hide_banner -an -t 10 -f null -  2>&1 | grep crop= | cut -d' ' -f 14- | sort | uniq -c | sort | tail -n1 | cut -d'=' -f2-)
     c=1
     while (( "$c" <= 1 )); do
-    mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-    text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-    text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-    text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-    text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
-    echo "try again? y or n"
-    read crop_choice
-if [[ "${crop_choice}" = "y" ]] ; then
-        c=1
-    else
-    c=$(($c + 1))
-fi
-
-  done  
+        mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+        text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+        text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+        text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+        text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
+        echo "try again? y or n"
+        read crop_choice
+        if [[ "${crop_choice}" = "y" ]] ; then
+            c=1
+        else
+            c=$(($c + 1))
+        fi
+    done
+    _set_up_trim "${file_input}"  
 fi
 
 #create directory structure
