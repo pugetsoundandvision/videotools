@@ -102,9 +102,11 @@ rsync --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/a
 package="${targetdirectory}/${mediaid}"
 
 #create checksum
+echo -e "\033[1;32mGenerating Checksums\033[0m"
 md5deep -bcr "$package" > "$package/metadata/${mediaid}.md5"
 
 #Run Bagit
+echo -e "\033[1;32mCreating Bag\033[0m"
 bagit baginplace "$package"
 
 #sync AIP to destination
