@@ -9,6 +9,25 @@ usage(){
     
 }
 
+_set_up_trim(){
+    echo 'StartTrimLength'
+    read StartTrimLength
+    echo 'EndTrimLength'
+    read EndTrimLength
+    if [ -n "${EndTrimLength}" ] ; then
+        FILELENGTH=$(ffprobe "${1}" 2>&1 | grep Duration | tr -d ' ' | cut -d',' -f1 | cut -d':' -f2-)
+        FILELENGTH_NORMALIZED=$(echo "${FILELENGTH}" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }')
+        ENDTRIM=$(echo "${FILELENGTH_NORMALIZED}" - "${EndTrimLength}" | bc)
+        if [ -n "${StartTrimLength}" ] && [ -n "${EndTrimLength}" ] ; then
+            ENDTRIM=$(echo "${FILELENGTH_NORMALIZED}" - "${EndTrimLength}" -  "${StartTrimLength}" | bc)
+        fi
+        ENDTRIMOPT="-t ${ENDTRIM}"
+    fi
+    if [ -n "${StartTrimLength}" ] ; then
+        STARTTRIMOPT="-ss ${StartTrimLength}"
+    fi
+}
+
 _error_exit(){
     echo -e "\033[1;32m"$1"\033[0m" 1>&2
     exit 1
@@ -52,6 +71,7 @@ fi
 
 #crop mode
 if [[ "${runtype}" = "crop" ]] ; then
+    _set_up_trim "${file_input}"
     cropdetect=$(ffmpeg -ss 30 -i "${file_input}" -vf cropdetect -hide_banner -an -t 10 -f null -  2>&1 | grep crop= | cut -d' ' -f 14- | sort | uniq -c | sort | tail -n1 | cut -d'=' -f2-)
     c=1
     while (( "$c" <= 1 )); do
@@ -87,7 +107,7 @@ mkdir "${targetdirectory}/${mediaid}/objects/access"
 mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
 mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
 if ! [ -e "$mp4_name" ] ; then
-    ffmpeg -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1 "$mp4_name" 
+    ffmpeg ${STARTTRIMOPT} -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1 ${ENDTRIMOPT} "$mp4_name" 
 fi
 #sync access mp4 if selected
 if [[ "${derivative_choice}" = "Y" ]] ; then
