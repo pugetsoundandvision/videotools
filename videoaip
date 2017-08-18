@@ -58,7 +58,7 @@ _get_end_trim(){
     fi
 }
 _set_up_crop(){
-    mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    mpv --no-terminal --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
     text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
     text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
     text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
@@ -136,7 +136,7 @@ if [[ "${runtype}" = "crop" ]] ; then
         cropdetect="${crop_w}:${crop_h_modified}:${crop_frame}"
     fi
     cropoptions=",crop=${cropdetect}"
-    mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]crop="${cropdetect}"[vo]
+    mpv --no-terminal --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]crop="${cropdetect}"[vo]
     _get_start_trim
     _get_end_trim
     _set_up_trim "${file_input}"
