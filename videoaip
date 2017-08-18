@@ -79,15 +79,28 @@ if [[ "${runtype}" = "crop" ]] ; then
         text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
-        echo "try again? y or n"
+        echo "Input number of lines to crop from bottom or Y to repeat. (Followed by 'Enter')"
+        echo "Press 'Enter' to proceed without cropping bottom"
         read crop_choice
-        if [[ "${crop_choice}" = "y" ]] ; then
+        if [[ "${crop_choice}" = [yY] ]] ; then
             c=1
         else
             c=$(($c + 1))
         fi
     done
-    _set_up_trim "${file_input}"  
+    crop_w=$(echo "${cropdetect}" | cut -d':' -f1)
+    crop_h=$(echo "${cropdetect}" | cut -d':' -f2)
+    crop_frame=$(echo "${cropdetect}" | cut -d':' -f3-)
+    if [ -n "${crop_choice}" ] ; then
+        crop_h_modified=$((crop_h-crop_choice))
+        if ! [ $(($crop_h_modified % 2)) -eq 0 ] ; then
+            crop_h_modified=$((crop_h_modified-1))
+        fi
+        cropdetect="${crop_w}:${crop_h_modified}:${crop_frame}"
+    fi
+    cropoptions=",crop=${cropdetect}"
+    mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]crop="${cropdetect}"[vo]
+    _set_up_trim "${file_input}"
 fi
 
 #create directory structure
@@ -106,7 +119,7 @@ mkdir "${targetdirectory}/${mediaid}/objects/access"
 mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
 mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
 if ! [ -e "$mp4_name" ] ; then
-    ffmpeg ${STARTTRIMOPT} -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1 ${ENDTRIMOPT} "$mp4_name" 
+    ffmpeg ${STARTTRIMOPT} -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name" 
 fi
 #sync access mp4 if selected
 if [[ "${derivative_choice}" = "Y" ]] ; then
