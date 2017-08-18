@@ -26,13 +26,23 @@ _set_up_trim(){
         STARTTRIMOPT="-ss ${StartTrimLength}"
     fi
 }
+_get_crop(){
+    if [ -z ${crop_message} ] ; then
+        crop_message="Input number of lines to crop from bottom. Enter Y to view file again. Leave blank to not crop bottom. Press Cancel to exit script."
+    fi
+    crop_choice=$(dialog --title "Crop Bottom of Video" --inputbox "${crop_message}" 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option 
+    if ! [[ "${crop_choice}" =~ ^[0-9]+$ ]] && ! [[ "${crop_choice}" = [yY] ]] ; then
+        crop_message="Please use integers only."
+        _get_crop
+    fi
+}
 _set_up_crop(){
         mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
-        crop_choice=$(dialog --title "Crop Bottom of Video" --inputbox "Input number of lines to crop from bottom. Enter Y to view file again. Leave blank to not crop bottom. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option
+        _get_crop
         if [[ "${crop_choice}" = [yY] ]] ; then
             _set_up_crop
         fi
