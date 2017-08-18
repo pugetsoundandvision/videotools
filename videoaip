@@ -9,6 +9,9 @@ usage(){
     
 }
 
+_cancel_option(){
+clear && echo "Goodbye" && exit 0
+}
 _set_up_trim(){
     if [ -n "${EndTrimLength}" ] ; then
         FILELENGTH=$(ffprobe "${1}" 2>&1 | grep Duration | tr -d ' ' | cut -d',' -f1 | cut -d':' -f2-)
@@ -29,7 +32,7 @@ _set_up_crop(){
         text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
-        crop_choice=$(dialog --title "Crop Bottom of Video" --inputbox "Input number of lines to crop from bottom. Enter Y to view file again. Leave blank to not crop bottom. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || clear && echo "Goodbye" && exit 0
+        crop_choice=$(dialog --title "Crop Bottom of Video" --inputbox "Input number of lines to crop from bottom. Enter Y to view file again. Leave blank to not crop bottom. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option
         if [[ "${crop_choice}" = [yY] ]] ; then
             _set_up_crop
         fi
@@ -78,6 +81,7 @@ fi
 
 #crop mode
 if [[ "${runtype}" = "crop" ]] ; then
+    echo -e "\033[1;32mPlease wait. Gathering crop information.\033[0m"
     cropdetect=$(ffmpeg -ss 15 -i "${file_input}" -vf cropdetect -hide_banner -an -t 10 -f null -  2>&1 | grep crop= | cut -d' ' -f 14- | sort | uniq -c | sort | tail -n1 | cut -d'=' -f2-)
     _set_up_crop
     crop_w=$(echo "${cropdetect}" | cut -d':' -f1)
@@ -92,8 +96,8 @@ if [[ "${runtype}" = "crop" ]] ; then
     fi
     cropoptions=",crop=${cropdetect}"
     mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]crop="${cropdetect}"[vo]
-    StartTrimLength=$(dialog --title "Start Trim Length" --inputbox "Enter number of seconds to trim from start of file. Leave blank to not trim. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || clear && echo "Goodbye" && exit 0
-    EndTrimLength=$(dialog --title "End Trim Length" --inputbox "Enter number of seconds to trim from start of file. Leave blank to not trim. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || clear && echo "Goodbye" && exit 0
+    StartTrimLength=$(dialog --title "Start Trim Length" --inputbox "Enter number of seconds to trim from start of file. Leave blank to not trim. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option
+    EndTrimLength=$(dialog --title "End Trim Length" --inputbox "Enter number of seconds to trim from start of file. Leave blank to not trim. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option
     _set_up_trim "${file_input}"
 fi
 
@@ -122,6 +126,7 @@ if [[ "${derivative_choice}" = "Y" ]] ; then
 fi
 
 #move files
+echo -e "\033[1;32mMoving Files into package\033[0m"
 rsync "$file_input" "${targetdirectory}/${mediaid}/objects"
 rsync --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
 
