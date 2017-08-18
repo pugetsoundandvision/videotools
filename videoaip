@@ -91,16 +91,19 @@ if [ "${*}" = "" ] ; then
 fi
 
 if [[ "${runtype}" = "edit" ]] ; then
-    echo "#INSERT YOUR VALUES BETWEEN THE QUOTES AND SAVE FILE" > "${config_file}"
-    echo "#To control file sync change 'sync_choice' to either Y or N" >> "${config_file}"
-    echo "#Then change destination to the file path of the desired destination" >> "${config_file}"
-    echo "sync_choice=\"$sync_choice\"" >> "${config_file}"
-    echo "destination=\"$destination\"" >> "${config_file}"
-    echo "" >> "${config_file}"
-    echo "#If you want to sync an additional access file to an extra location choose Y or N and enter file path of destination below" >> "${config_file}"
-    echo "derivative_choice=\"$derivative_choice\"" >> "${config_file}"
-    echo "derivative_destination=\"$derivative_destination\"" >> "${config_file}"
-    mate "$config_file"
+    {
+    echo "#INSERT YOUR VALUES BETWEEN THE QUOTES AND SAVE FILE"
+    echo "#To control file sync change 'sync_choice' to either Y or N"
+    echo "#Then change destination to the file path of the desired destination"
+    echo "#Enter destinations (with no spaces in names) between the parentheses and separated them with spaces"
+    echo "sync_choice=\"$sync_choice\""
+    echo "destination=("${destination[@]}")"
+    echo ""
+    echo "#If you want to sync an additional access file to an extra location choose Y or N and enter file path of destination below"
+    echo "derivative_choice=\"${derivative_choice}\""
+    echo "derivative_destination=\"${derivative_destination}\""
+    } > "${config_file}"
+    mate "$config_file" || nano "$config_file"
     exit
 fi
 
@@ -185,16 +188,8 @@ bagit baginplace "$package"
 
 #sync AIP to destination
 if [[ "${sync_choice}" = "Y" ]] ; then
-    echo -e "\033[1;32mSyncing Files to  "$destination" \033[0m"
-    rsync -Pa "$package" "$destination"
-
-# check if destination is local. If local verify with bagit. 
-    remote_test=$(echo "$destination" | grep "@")
-    if [ -n "$remote_test" ] ; then
-        echo -e "\033[1;32mAs Destination is not local audioaip is skipping bagit verification\033[0m"
-        exit
-    fi
-    
-    echo -e "\033[1;32mVerifying checksums of package \033[0m"
-    bagit verifypayloadmanifests --excludehiddenfiles "$destination"/"${orig_base%.*}"
+    for i in "${destination[@]}" ; do
+        echo -e "\033[1;32mSyncing Files to  "$i" \033[0m"
+        rsync -Pa "$package" "$i"
+    done
 fi
