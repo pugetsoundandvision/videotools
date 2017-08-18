@@ -1,16 +1,15 @@
 #!/bin/bash
 
 config_file="$HOME/.$(basename "${0}").conf"
-touch $config_file
-source $config_file
+touch "${config_file}"
+source "${config_file}"
 
 usage(){
     echo "usage"
-    
 }
 
 _cancel_option(){
-clear && echo "Goodbye" && exit 0
+    clear && echo "Goodbye" && exit 0
 }
 _set_up_trim(){
     if [ -n "${EndTrimLength}" ] ; then
@@ -27,7 +26,7 @@ _set_up_trim(){
     fi
 }
 _get_crop(){
-    if [ -z ${crop_message} ] ; then
+    if [ -z "${crop_message}" ] ; then
         crop_message="Input number of lines to crop from bottom. Enter Y to view file again. Leave blank to not crop bottom. Press Cancel to exit script."
     fi
     crop_choice=$(dialog --title "Crop Bottom of Video" --inputbox "${crop_message}" 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option 
@@ -38,7 +37,7 @@ _get_crop(){
 }
 
 _get_start_trim(){
-    if [ -z ${start_trim_message} ] ; then
+    if [ -z "${start_trim_message}" ] ; then
         start_trim_message="Enter number of seconds to trim from start of file. Leave blank to not trim. Press Cancel to exit script."
     fi
     StartTrimLength=$(dialog --title "Start Trim Length" --inputbox "${start_trim_message}" 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option 
@@ -49,7 +48,7 @@ _get_start_trim(){
 }
 
 _get_end_trim(){
-    if [ -z ${end_trim_message} ] ; then
+    if [ -z "${end_trim_message}" ] ; then
         end_trim_message="Enter number of seconds to trim from end of file. Leave blank to not trim. Press Cancel to exit script."
     fi
     EndTrimLength=$(dialog --title "End Trim Length" --inputbox "${end_trim_message}" 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option 
@@ -59,15 +58,15 @@ _get_end_trim(){
     fi
 }
 _set_up_crop(){
-        mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-        text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-        text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-        text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-        text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
-        _get_crop
-        if [[ "${crop_choice}" = [yY] ]] ; then
-            _set_up_crop
-        fi
+    mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
+    _get_crop
+    if [[ "${crop_choice}" = [yY] ]] ; then
+        _set_up_crop
+    fi
 }
 
 _error_exit(){
@@ -155,11 +154,11 @@ mkdir "${targetdirectory}/${mediaid}/objects/access"
 mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
 mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
 if ! [ -e "$mp4_name" ] ; then
-    ffmpeg ${STARTTRIMOPT} -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name" 
+    ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name" 
 fi
 #sync access mp4 if selected
 if [[ "${derivative_choice}" = "Y" ]] ; then
-    echo -e "\033[1;32mSyncing access copy to  "$destination" \033[0m"
+    echo -e "\033[1;32mSyncing access copy to  "${destination}" \033[0m"
     rsync -Pa "$mp4_name" "$derivative_destination"
 fi
 
@@ -193,6 +192,3 @@ if [[ "${sync_choice}" = "Y" ]] ; then
     echo -e "\033[1;32mVerifying checksums of package \033[0m"
     bagit verifypayloadmanifests --excludehiddenfiles "$destination"/"${orig_base%.*}"
 fi
-
-
-
