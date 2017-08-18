@@ -177,8 +177,13 @@ if ! [ -e "$mp4_name" ] ; then
 fi
 #sync access mp4 if selected
 if [[ "${derivative_choice}" = "Y" ]] ; then
-    echo -e "\033[1;32mSyncing access copy to  "${destination}" \033[0m"
-    rsync -Pa "$mp4_name" "$derivative_destination"
+    if [ -d "${derivative_destination}" ] ; then
+        echo -e "\033[1;32mSyncing access copy to "${derivative_destination}" \033[0m"
+        rsync -Pa "$mp4_name" "${derivative_destination}"
+    else
+        echo -e "\033[1;31mTarget directory is invalid! Skipping.\033[0m"
+    fi
+    
 fi
 
 #move files
@@ -199,7 +204,11 @@ bagit baginplace "$package"
 #sync AIP to destination
 if [[ "${sync_choice}" = "Y" ]] ; then
     for i in "${destination[@]}" ; do
-        echo -e "\033[1;32mSyncing Files to  "$i" \033[0m"
-        rsync -Pa "$package" "$i"
+        if [ -d "$i" ] ; then
+            echo -e "\033[1;32mSyncing Files to  "$i" \033[0m"
+            rsync -Pa "$package" "$i"
+        else
+            echo -e "\033[1;31mTarget directory is invalid! Skipping.\033[0m"
+        fi
     done
 fi
