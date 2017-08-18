@@ -1,12 +1,82 @@
 #!/bin/bash
 
 config_file="$HOME/.$(basename "${0}").conf"
-touch $config_file
-source $config_file
+touch "${config_file}"
+source "${config_file}"
 
 usage(){
     echo "usage"
-    
+}
+
+_cancel_option(){
+    clear && echo "Goodbye" && exit 0
+}
+_set_up_trim(){
+    if [ -n "${EndTrimLength}" ] ; then
+        FILELENGTH=$(ffprobe "${1}" 2>&1 | grep Duration | tr -d ' ' | cut -d',' -f1 | cut -d':' -f2-)
+        FILELENGTH_NORMALIZED=$(echo "${FILELENGTH}" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }')
+        ENDTRIM=$(echo "${FILELENGTH_NORMALIZED}" - "${EndTrimLength}" | bc)
+        if [ -n "${StartTrimLength}" ] && [ -n "${EndTrimLength}" ] ; then
+            ENDTRIM=$(echo "${FILELENGTH_NORMALIZED}" - "${EndTrimLength}" -  "${StartTrimLength}" | bc)
+        fi
+        ENDTRIMOPT="-t ${ENDTRIM}"
+    fi
+    if [ -n "${StartTrimLength}" ] ; then
+        STARTTRIMOPT="-ss ${StartTrimLength}"
+    fi
+}
+
+_preview_trim(){
+    mpv --no-terminal --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]crop="${cropdetect}"[vo]
+}
+_get_crop(){
+    if [ -z "${crop_message}" ] ; then
+        crop_message="Input number of lines to crop from bottom. Enter Y to view file again. Leave blank to not crop bottom. Press Cancel to exit script."
+    fi
+    crop_choice=$(dialog --title "Crop Bottom of Video" --inputbox "${crop_message}" 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option 
+    if [ -n "${crop_choice}" ] && ! [[ "${crop_choice}" =~ ^[0-9]+$ ]] && ! [[ "${crop_choice}" = [yY] ]] ; then
+        crop_message="Please use integers only."
+        _get_crop
+    fi
+}
+
+_get_start_trim(){
+    if [ -z "${start_trim_message}" ] ; then
+        start_trim_message="Enter number of seconds to trim from start of file. Enter Y to view file again. Leave blank to not trim. Press Cancel to exit script."
+    fi
+    StartTrimLength=$(dialog --title "Start Trim Length" --inputbox "${start_trim_message}" 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option 
+    if [ -n "${StartTrimLength}" ] && ! [[ "${StartTrimLength}" =~ ^[0-9]+$ ]] && ! [[ "${StartTrimLength}" = [yY] ]] ; then
+        start_trim_message="Please use integers only."
+        _get_start_trim
+    elif [[ "${StartTrimLength}" = [yY] ]] ; then
+        _preview_trim
+        _get_start_trim
+    fi
+}
+
+_get_end_trim(){
+    if [ -z "${end_trim_message}" ] ; then
+        end_trim_message="Enter number of seconds to trim from end of file. Enter Y to view file again. Leave blank to not trim. Press Cancel to exit script."
+    fi
+    EndTrimLength=$(dialog --title "End Trim Length" --inputbox "${end_trim_message}" 8 50 3>&1 1>&2 2>&3 3>&-) || _cancel_option 
+    if [ -n "${EndTrimLength}" ] && ! [[ "${EndTrimLength}" =~ ^[0-9]+$ ]] && ! [[ "${EndTrimLength}" = [yY] ]] ; then
+        end_trim_message="Please use integers only."
+        _get_end_trim
+    elif [[ "${EndTrimLength}" = [yY] ]] ; then
+        _preview_trim
+        _get_end_trim
+    fi
+}
+_set_up_crop(){
+    mpv --no-terminal --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
+    text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
+    _get_crop
+    if [[ "${crop_choice}" = [yY] ]] ; then
+        _set_up_crop
+    fi
 }
 
 _error_exit(){
@@ -31,16 +101,19 @@ if [ "${*}" = "" ] ; then
 fi
 
 if [[ "${runtype}" = "edit" ]] ; then
-    echo "#INSERT YOUR VALUES BETWEEN THE QUOTES AND SAVE FILE" > "${config_file}"
-    echo "#To control file sync change 'sync_choice' to either Y or N" >> "${config_file}"
-    echo "#Then change destination to the file path of the desired destination" >> "${config_file}"
-    echo "sync_choice=\"$sync_choice\"" >> "${config_file}"
-    echo "destination=\"$destination\"" >> "${config_file}"
-    echo "" >> "${config_file}"
-    echo "#If you want to sync an additional access file to an extra location choose Y or N and enter file path of destination below" >> "${config_file}"
-    echo "derivative_choice=\"$derivative_choice\"" >> "${config_file}"
-    echo "derivative_destination=\"$derivative_destination\"" >> "${config_file}"
-    mate "$config_file"
+    {
+    echo "#INSERT YOUR VALUES BETWEEN THE QUOTES AND SAVE FILE"
+    echo "#To control file sync change 'sync_choice' to either Y or N"
+    echo "#Then change destination to the file path of the desired destination"
+    echo "#Enter destinations (with no spaces in names) between the parentheses and separated them with spaces"
+    echo "sync_choice=\"$sync_choice\""
+    echo "destination=("${destination[@]}")"
+    echo ""
+    echo "#If you want to sync an additional access file to an extra location choose Y or N and enter file path of destination below"
+    echo "derivative_choice=\"${derivative_choice}\""
+    echo "derivative_destination=\"${derivative_destination}\""
+    } > "${config_file}"
+    mate "$config_file" || nano "$config_file"
     exit
 fi
 
@@ -50,13 +123,39 @@ if [ ! -f "$file_input" ]; then
     _error_exit "Input could not be found. Please enter valid input."
 fi
 
-
-#create directory structure
+#set variables
 orig_base=$(basename "$file_input")
-deriv_name="${file_input%.*}.mov"
 mp4_name="${file_input%.*}.mp4"
 mediaid="${orig_base%.*}"
 targetdirectory=$(dirname "${file_input}")
+
+if [ -d "${targetdirectory}/${mediaid}" ] ; then
+    _error_exit "Directory already exists. Exiting..."
+fi
+
+#crop mode
+if [[ "${runtype}" = "crop" ]] ; then
+    echo -e "\033[1;32mPlease wait. Gathering crop information.\033[0m"
+    cropdetect=$(ffmpeg -ss 15 -i "${file_input}" -vf cropdetect -hide_banner -an -t 10 -f null -  2>&1 | grep crop= | cut -d' ' -f 14- | sort | uniq -c | sort | tail -n1 | cut -d'=' -f2-)
+    _set_up_crop
+    crop_w=$(echo "${cropdetect}" | cut -d':' -f1)
+    crop_h=$(echo "${cropdetect}" | cut -d':' -f2)
+    crop_frame=$(echo "${cropdetect}" | cut -d':' -f3-)
+    if [ -n "${crop_choice}" ] ; then
+        crop_h_modified=$((crop_h-crop_choice))
+        if ! [ $(($crop_h_modified % 2)) -eq 0 ] ; then
+            crop_h_modified=$((crop_h_modified-1))
+        fi
+        cropdetect="${crop_w}:${crop_h_modified}:${crop_frame}"
+    fi
+    cropoptions=",crop=${cropdetect}"
+    _preview_trim
+    _get_start_trim
+    _get_end_trim
+    _set_up_trim "${file_input}"
+fi
+
+#create directory structure
 mkdir "${targetdirectory}/${mediaid}" || _error_exit "Directory already exists. Exiting..."
 mkdir "${targetdirectory}/${mediaid}/metadata"
 mkdir "${targetdirectory}/${mediaid}/logs"
@@ -64,64 +163,52 @@ mkdir "${targetdirectory}/${mediaid}/logs/fileMeta"
 mkdir "${targetdirectory}/${mediaid}/objects"
 mkdir "${targetdirectory}/${mediaid}/objects/access"
 
-if [[ "${runtype}" = "crop" ]] ; then
-    c=1
-    while (( "$c" <= 1 )); do
-    mpv --keep-open=yes --title="Preview" "$file_input" -lavfi-complex [vid1]split=2[aa][b],[aa]crop=iw:20:0:ih-20[aa1],[aa1]scale=iw:ih*20:flags=neighbor,setdar=4/3[aa2],[aa2]drawgrid=width=iw:height=ih/20:t=1:c=lightgreen[bb2],[bb2]scale=300:-1[aa3],[aa3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-    text="20": fontcolor=lightgreen: fontsize=12: x=10: y=0"[t],[t]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-    text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-    text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
-    text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b][t4]overlay=10:10[vo]
-    echo "try again? y or n"
-    read crop_choice
-if [[ "${crop_choice}" = "y" ]] ; then
-        c=1
-    else
-    c=$(($c + 1))
-fi
-
-  done  
-fi
-
 #create metadata and derivative files
 mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
 mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
 if ! [ -e "$mp4_name" ] ; then
-    ffmpeg -i "$file_input" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1 "$mp4_name" 
+    ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name"
+    if [ "${?}" -ne 0 ] ; then
+        echo -e "\033[1;31mError in Conversion! Cleaning up and Exiting.\033[0m"
+        rm "$mp4_name"
+        rm -r "${targetdirectory}/${mediaid}"
+        exit 1
+    fi
 fi
 #sync access mp4 if selected
 if [[ "${derivative_choice}" = "Y" ]] ; then
-    echo -e "\033[1;32mSyncing access copy to  "$destination" \033[0m"
-    rsync -Pa "$mp4_name" "$derivative_destination"
+    if [ -d "${derivative_destination}" ] ; then
+        echo -e "\033[1;32mSyncing access copy to "${derivative_destination}" \033[0m"
+        rsync -Pa "$mp4_name" "${derivative_destination}"
+    else
+        echo -e "\033[1;31mTarget directory is invalid! Skipping.\033[0m"
+    fi
+    
 fi
 
 #move files
+echo -e "\033[1;32mMoving Files into package\033[0m"
 rsync "$file_input" "${targetdirectory}/${mediaid}/objects"
 rsync --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
 
 package="${targetdirectory}/${mediaid}"
 
 #create checksum
+echo -e "\033[1;32mGenerating Checksums\033[0m"
 md5deep -bcr "$package" > "$package/metadata/${mediaid}.md5"
 
 #Run Bagit
+echo -e "\033[1;32mCreating Bag\033[0m"
 bagit baginplace "$package"
 
 #sync AIP to destination
 if [[ "${sync_choice}" = "Y" ]] ; then
-    echo -e "\033[1;32mSyncing Files to  "$destination" \033[0m"
-    rsync -Pa "$package" "$destination"
-
-# check if destination is local. If local verify with bagit. 
-    remote_test=$(echo "$destination" | grep "@")
-    if [ -n "$remote_test" ] ; then
-        echo -e "\033[1;32mAs Destination is not local audioaip is skipping bagit verification\033[0m"
-        exit
-    fi
-    
-    echo -e "\033[1;32mVerifying checksums of package \033[0m"
-    bagit verifypayloadmanifests --excludehiddenfiles "$destination"/"${orig_base%.*}"
+    for i in "${destination[@]}" ; do
+        if [ -d "$i" ] ; then
+            echo -e "\033[1;32mSyncing Files to  "$i" \033[0m"
+            rsync -Pa "$package" "$i"
+        else
+            echo -e "\033[1;31mTarget directory is invalid! Skipping.\033[0m"
+        fi
+    done
 fi
-
-
-
