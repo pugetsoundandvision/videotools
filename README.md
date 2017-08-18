@@ -6,7 +6,7 @@ To install and use these tools in Mac OSX, use the "Terminal" application locate
 
 `brew install videotools`
 
-Audiotools depends on having textmate installed. It will attempt to install this automatically. If for some reason this doesn't work, you can install via:
+Videotools depends on having textmate installed. It will attempt to install this automatically. If for some reason this doesn't work, you can install via:
 
 `brew cask install textmate`
 
