@@ -10,10 +10,6 @@ usage(){
 }
 
 _set_up_trim(){
-    echo 'StartTrimLength'
-    read StartTrimLength
-    echo 'EndTrimLength'
-    read EndTrimLength
     if [ -n "${EndTrimLength}" ] ; then
         FILELENGTH=$(ffprobe "${1}" 2>&1 | grep Duration | tr -d ' ' | cut -d',' -f1 | cut -d':' -f2-)
         FILELENGTH_NORMALIZED=$(echo "${FILELENGTH}" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }')
@@ -33,7 +29,7 @@ _set_up_crop(){
         text="15": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.26"[t2],[t2]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="10": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.52"[t3],[t3]drawtext="/Library/Fonts/Andale\ Mono.ttf: \
         text="5": fontcolor=lightgreen: fontsize=12: x=10: y=(h-text_h)*.79"[t4],[b]crop="${cropdetect}"[b1],[b1][t4]overlay=10:10[vo]
-        crop_choice=$(dialog --title "Start Trim Length" --inputbox "Input number of lines to crop from bottom. Enter Y to view file again. Leave blank to not crop bottom" 8 50 3>&1 1>&2 2>&3 3>&-)
+        crop_choice=$(dialog --title "Crop Bottom of Video" --inputbox "Input number of lines to crop from bottom. Enter Y to view file again. Leave blank to not crop bottom. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || clear && echo "Goodbye" && exit 0
         if [[ "${crop_choice}" = [yY] ]] ; then
             _set_up_crop
         fi
@@ -96,6 +92,8 @@ if [[ "${runtype}" = "crop" ]] ; then
     fi
     cropoptions=",crop=${cropdetect}"
     mpv --keep-open=yes --title="Preview" "${file_input}" -lavfi-complex [vid1]crop="${cropdetect}"[vo]
+    StartTrimLength=$(dialog --title "Start Trim Length" --inputbox "Enter number of seconds to trim from start of file. Leave blank to not trim. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || clear && echo "Goodbye" && exit 0
+    EndTrimLength=$(dialog --title "End Trim Length" --inputbox "Enter number of seconds to trim from start of file. Leave blank to not trim. Press Cancel to exit script." 8 50 3>&1 1>&2 2>&3 3>&-) || clear && echo "Goodbye" && exit 0
     _set_up_trim "${file_input}"
 fi
 
