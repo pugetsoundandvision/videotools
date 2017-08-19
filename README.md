@@ -6,7 +6,7 @@ To install and use these tools in Mac OSX, use the "Terminal" application locate
 
 `brew install videotools`
 
-Audiotools depends on having textmate installed. It will attempt to install this automatically. If for some reason this doesn't work, you can install via:
+Videotools depends on having textmate installed. It will attempt to install this automatically. If for some reason this doesn't work, you can install via:
 
 `brew cask install textmate`
 
@@ -36,4 +36,4 @@ videotools scripts are licensed under a [BSD 3-Clause License](https://github.co
 
 Documentation
 
-<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />All associated documentation for the audiotools scripts are licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a> unless otherwise noted.
+<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />All associated documentation for the videotools scripts are licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a> unless otherwise noted.
