@@ -194,7 +194,7 @@ md5deep -bcr "$package" > "$package/metadata/${mediaid}.md5"
 
 #Run Bagit
 echo -e "\033[1;32mCreating Bag\033[0m"
-bagit baginplace "$package"
+bagit.py "$package"
 
 #sync AIP to destination
 if [[ "${sync_choice}" = "Y" ]] ; then
