@@ -84,8 +84,6 @@ _error_exit(){
     exit 1
 }
 
-file_input=$1
-
 OPTIND=1
 while getopts "hep:c:" opt ; do
     case "${opt}" in
@@ -119,87 +117,92 @@ fi
 
 #Check if input exists
 
-if [ ! -f "$file_input" ]; then
-    _error_exit "Input could not be found. Please enter valid input."
-fi
+while [ "${*}" != "" ] ; do
+    file_input="${1}"
+    shift
 
-#set variables
-orig_base=$(basename "$file_input")
-mp4_name="${file_input%.*}.mp4"
-mediaid="${orig_base%.*}"
-targetdirectory=$(dirname "${file_input}")
+    if [ ! -f "$file_input" ]; then
+        _error_exit "Input could not be found. Please enter valid input."
+    fi
 
-if [ -d "${targetdirectory}/${mediaid}" ] ; then
-    _error_exit "Directory already exists. Exiting..."
-fi
+    #set variables
+    orig_base=$(basename "$file_input")
+    mp4_name="${file_input%.*}.mp4"
+    mediaid="${orig_base%.*}"
+    targetdirectory=$(dirname "${file_input}")
 
-#crop mode
-if [[ "${runtype}" = "crop" ]] ; then
-    echo -e "\033[1;32mPlease wait. Gathering crop information.\033[0m"
-    cropdetect=$(ffmpeg -ss 15 -i "${file_input}" -vf cropdetect -hide_banner -an -t 10 -f null -  2>&1 | grep crop= | cut -d' ' -f 14- | sort | uniq -c | sort | tail -n1 | cut -d'=' -f2-)
-    _set_up_crop
-    crop_w=$(echo "${cropdetect}" | cut -d':' -f1)
-    crop_h=$(echo "${cropdetect}" | cut -d':' -f2)
-    crop_frame=$(echo "${cropdetect}" | cut -d':' -f3-)
-    if [ -n "${crop_choice}" ] ; then
-        crop_h_modified=$((crop_h-crop_choice))
-        if ! [ $(($crop_h_modified % 2)) -eq 0 ] ; then
-            crop_h_modified=$((crop_h_modified-1))
+    if [ -d "${targetdirectory}/${mediaid}" ] ; then
+        _error_exit "Directory already exists. Exiting..."
+    fi
+
+    #crop mode
+    if [[ "${runtype}" = "crop" ]] ; then
+        echo -e "\033[1;32mPlease wait. Gathering crop information.\033[0m"
+        cropdetect=$(ffmpeg -ss 15 -i "${file_input}" -vf cropdetect -hide_banner -an -t 10 -f null -  2>&1 | grep crop= | cut -d' ' -f 14- | sort | uniq -c | sort | tail -n1 | cut -d'=' -f2-)
+        _set_up_crop
+        crop_w=$(echo "${cropdetect}" | cut -d':' -f1)
+        crop_h=$(echo "${cropdetect}" | cut -d':' -f2)
+        crop_frame=$(echo "${cropdetect}" | cut -d':' -f3-)
+        if [ -n "${crop_choice}" ] ; then
+            crop_h_modified=$((crop_h-crop_choice))
+            if ! [ $(($crop_h_modified % 2)) -eq 0 ] ; then
+                crop_h_modified=$((crop_h_modified-1))
+            fi
+            cropdetect="${crop_w}:${crop_h_modified}:${crop_frame}"
         fi
-        cropdetect="${crop_w}:${crop_h_modified}:${crop_frame}"
+        cropoptions=",crop=${cropdetect}"
+        _preview_trim
+        _get_start_trim
+        _get_end_trim
+        _set_up_trim "${file_input}"
     fi
-    cropoptions=",crop=${cropdetect}"
-    _preview_trim
-    _get_start_trim
-    _get_end_trim
-    _set_up_trim "${file_input}"
-fi
 
-#create directory structure
-mkdir "${targetdirectory}/${mediaid}" || _error_exit "Directory already exists. Exiting..."
-mkdir "${targetdirectory}/${mediaid}/metadata"
-mkdir "${targetdirectory}/${mediaid}/logs"
-mkdir "${targetdirectory}/${mediaid}/logs/fileMeta"
-mkdir "${targetdirectory}/${mediaid}/objects"
-mkdir "${targetdirectory}/${mediaid}/objects/access"
+    #create directory structure
+    mkdir "${targetdirectory}/${mediaid}" || _error_exit "Directory already exists. Exiting..."
+    mkdir "${targetdirectory}/${mediaid}/metadata"
+    mkdir "${targetdirectory}/${mediaid}/logs"
+    mkdir "${targetdirectory}/${mediaid}/logs/fileMeta"
+    mkdir "${targetdirectory}/${mediaid}/objects"
+    mkdir "${targetdirectory}/${mediaid}/objects/access"
 
-#create metadata and derivative files
-mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
-mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
-if ! [ -e "$mp4_name" ] ; then
-    ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name"
-    if [ "${?}" -ne 0 ] ; then
-        echo -e "\033[1;31mError in Conversion! Cleaning up and Exiting.\033[0m"
-        rm "$mp4_name"
-        rm -r "${targetdirectory}/${mediaid}"
-        exit 1
+    #create metadata and derivative files
+    mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
+    mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
+    if ! [ -e "$mp4_name" ] ; then
+        ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name"
+        if [ "${?}" -ne 0 ] ; then
+            echo -e "\033[1;31mError in Conversion! Cleaning up and Exiting.\033[0m"
+            rm "$mp4_name"
+            rm -r "${targetdirectory}/${mediaid}"
+            exit 1
+        fi
     fi
-fi
-#sync access mp4 if selected
-if [[ "${derivative_choice}" = "Y" ]] ; then
-    echo -e "\033[1;32mSyncing access copy to "${derivative_destination}" \033[0m"
-    rsync -Pa "$mp4_name" "${derivative_destination}" || echo -e "\033[1;31mError: Sync Failed\033[0m"
-fi
+    #sync access mp4 if selected
+    if [[ "${derivative_choice}" = "Y" ]] ; then
+        echo -e "\033[1;32mSyncing access copy to "${derivative_destination}" \033[0m"
+        rsync -Pa "$mp4_name" "${derivative_destination}" || echo -e "\033[1;31mError: Sync Failed\033[0m"
+    fi
 
-#move files
-echo -e "\033[1;32mMoving Files into package\033[0m"
-rsync "$file_input" "${targetdirectory}/${mediaid}/objects"
-rsync --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
+    #move files
+    echo -e "\033[1;32mMoving Files into package\033[0m"
+    rsync "$file_input" "${targetdirectory}/${mediaid}/objects"
+    rsync --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
 
-package="${targetdirectory}/${mediaid}"
+    package="${targetdirectory}/${mediaid}"
 
-#create checksum
-echo -e "\033[1;32mGenerating Checksums\033[0m"
-md5deep -bcr "$package" > "$package/metadata/${mediaid}.md5"
+    #create checksum
+    echo -e "\033[1;32mGenerating Checksums\033[0m"
+    md5deep -bcr "$package" > "$package/metadata/${mediaid}.md5"
 
-#Run Bagit
-echo -e "\033[1;32mCreating Bag\033[0m"
-bagit baginplace "$package"
+    #Run Bagit
+    echo -e "\033[1;32mCreating Bag\033[0m"
+    bagit baginplace "$package"
 
-#sync AIP to destination
-if [[ "${sync_choice}" = "Y" ]] ; then
-    for i in "${destination[@]}" ; do
-        echo -e "\033[1;32mSyncing Files to  "$i" \033[0m"
-        rsync -Pa "$package" "$i" || echo -e "\033[1;31mError: Sync Failed\033[0m"
-    done
-fi
+    #sync AIP to destination
+    if [[ "${sync_choice}" = "Y" ]] ; then
+        for i in "${destination[@]}" ; do
+            echo -e "\033[1;32mSyncing Files to  "$i" \033[0m"
+            rsync -Pa "$package" "$i" || echo -e "\033[1;31mError: Sync Failed\033[0m"
+        done
+    fi
+done
