@@ -180,7 +180,11 @@ while [ "${*}" != "" ] ; do
     #sync access mp4 if selected
     if [[ "${derivative_choice}" = "Y" ]] ; then
         echo -e "\033[1;32mSyncing access copy to "${derivative_destination}" \033[0m"
-        rsync -Pa "$mp4_name" "${derivative_destination}" || echo -e "\033[1;31mError: Sync Failed\033[0m"
+        if [ -d "${derivative_destination}" ] ; then
+            rsync -Pa "$mp4_name" "${derivative_destination}"
+        else
+            echo -e "\033[1;31mError: Derivative Sync to "${derivative_destination}" Failed\033[0m"
+        fi
     fi
 
     #move files
