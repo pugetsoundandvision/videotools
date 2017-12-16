@@ -10,11 +10,11 @@ Videotools depends on having textmate installed. It will attempt to install this
 
 `brew cask install textmate`
 
-**VideoAIP**: For a given video file, creates an archival package that adheres to the bagit standard with an mp4 access file, technical metadata and checksums.  Once installed, for instructions just type `videoaip` to see usage information.
+**VideoAIP**: For a given video file(s), creates an archival package that adheres to the bagit standard with an mp4 access file, technical metadata and checksums.  Once installed, for instructions just type `videoaip` to see usage information.
 
 This script includes an option to sync package/access copies to a remote or local location for easy backup.
 
-Usage: `videoaip [inputfile]`, help: `videoaip -h`, crop mode: `videoaip -c`,set up configuration for options `videoaip -e`
+Usage: `videoaip [option] [inputfile1] [inputfile2] ... `, help: `videoaip -h`, crop mode: `videoaip -c`,set up configuration for options `videoaip -e`
 
 **VideoAIP Configuration:**
 
