@@ -81,7 +81,7 @@ _set_up_crop(){
 
 _error_exit(){
     echo -e "\033[1;32m"$1"\033[0m" 1>&2
-    exit 1
+    continue
 }
 
 OPTIND=1
@@ -201,8 +201,12 @@ while [ "${*}" != "" ] ; do
     #sync AIP to destination
     if [[ "${sync_choice}" = "Y" ]] ; then
         for i in "${destination[@]}" ; do
-            echo -e "\033[1;32mSyncing Files to  "$i" \033[0m"
-            rsync -Pa "$package" "$i" || echo -e "\033[1;31mError: Sync Failed\033[0m"
+            if [ -d "${i}" ] ; then
+                echo -e "\033[1;32mSyncing Files to  "${i}" \033[0m"
+                rsync -Pa "$package" "${i}"
+            else
+                echo -e "\033[1;31mError: Sync to ${i} Failed\033[0m"
+            fi
         done
     fi
 done
