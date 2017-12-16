@@ -26,7 +26,8 @@ To set your options, simply type them between the respective quotation marks, sa
 The options require file paths.  An easy way to find the file path for a file or folder is just to drag it into the terminal window and then copy the results. It should looks something like `/Users/username/Desktop/myfolder`
 
 * The first option is to enable synchronizing your preservation package to a second location.  Enable this by entering "Y" and a path (or ssh path) for a destination.  Something like: `sync_choice="Y"` and `destination="path to your folder here"`
-* The second option allows you to set a location to make an extra copy of your access files (in addition to the ones contained in your package).  This enables you to have copies of all access files added to one central folder for more easy management. Enable this by entering "Y" and a path (or ssh path) for a destination.  Something like: `derivative_choice="Y"` and `destination="path to your folder here"`
+* The second option can be used in conjunction with the first. If you wish to remove the locally generated AIP after syncing it to its destination, set this to `Y`.
+* The third option allows you to set a location to make an extra copy of your access files (in addition to the ones contained in your package).  This enables you to have copies of all access files added to one central folder for more easy management. Enable this by entering "Y" and a path (or ssh path) for a destination.  Something like: `derivative_choice="Y"` and `destination="path to your folder here"`
 
 ## Licenses
 
