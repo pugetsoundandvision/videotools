@@ -104,8 +104,11 @@ if [[ "${runtype}" = "edit" ]] ; then
     echo "#To control file sync change 'sync_choice' to either Y or N"
     echo "#Then change destination to the file path of the desired destination"
     echo "#Enter destinations (with no spaces in names) between the parentheses and separated them with spaces"
-    echo "sync_choice=\"$sync_choice\""
+    echo "sync_choice=\"${sync_choice}\""
     echo "destination=("${destination[@]}")"
+    echo ""
+    echo "#To remove original AIP after syncing change to Y"
+    echo "remove_aip=\"${remove_aip}\""
     echo ""
     echo "#If you want to sync an additional access file to an extra location choose Y or N and enter file path of destination below"
     echo "derivative_choice=\"${derivative_choice}\""
@@ -212,5 +215,9 @@ while [ "${*}" != "" ] ; do
                 echo -e "\033[1;31mError: Sync to ${i} Failed\033[0m"
             fi
         done
+        if [ "${remove_aip}" = "Y" ] ; then
+            echo "Removing source AIP"
+            rm -r "${package}"
+        fi
     fi
 done
