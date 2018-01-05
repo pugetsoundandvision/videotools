@@ -172,7 +172,7 @@ while [ "${*}" != "" ] ; do
     mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
     mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
     if ! [ -e "$mp4_name" ] ; then
-        ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name"
+        ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name" 2> "${targetdirectory}/${mediaid}/logs/${mediaid}_mp4.log"
         if [ "${?}" -ne 0 ] ; then
             echo -e "\033[1;31mError in Conversion! Cleaning up and Exiting.\033[0m"
             rm "$mp4_name"
