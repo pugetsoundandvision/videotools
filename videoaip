@@ -85,14 +85,16 @@ _error_exit(){
 }
 
 OPTIND=1
-while getopts "hep:c:" opt ; do
+while getopts "hec:l:" opt ; do
     case "${opt}" in
         h) usage ;;
         e) runtype="edit";;
-        c) runtype="crop" file_input="$2";;
+        c) runtype="crop";;
+        l) logfiles+=("${OPTARG}");;
         *)
     esac
 done
+shift $((OPTIND -1))
 
 if [ "${*}" = "" ] ; then
     usage
@@ -172,7 +174,7 @@ while [ "${*}" != "" ] ; do
     mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
     mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
     if ! [ -e "$mp4_name" ] ; then
-        ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name" 2> "${targetdirectory}/${mediaid}/logs/${mediaid}_mp4.log"
+        ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name" 2>&1 | tee "${targetdirectory}/${mediaid}/logs/${mediaid}_mp4.log"
         if [ "${?}" -ne 0 ] ; then
             echo -e "\033[1;31mError in Conversion! Cleaning up and Exiting.\033[0m"
             rm "$mp4_name"
@@ -192,8 +194,11 @@ while [ "${*}" != "" ] ; do
 
     #move files
     echo -e "\033[1;32mMoving Files into package\033[0m"
-    rsync "$file_input" "${targetdirectory}/${mediaid}/objects"
-    rsync --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
+    rsync -av "$file_input" "${targetdirectory}/${mediaid}/objects"
+    rsync -av --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
+    for i in "${logfiles[@]}" ; do
+        rsync -av "${i}" "${targetdirectory}/${mediaid}/logs/"
+    done
 
     package="${targetdirectory}/${mediaid}"
 
