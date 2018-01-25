@@ -5,7 +5,7 @@ touch "${config_file}"
 source "${config_file}"
 
 usage(){
-    echo "Usage: videoaip [option] [inputfile1] [inputfile2] ... , help mode: videoaip -h, crop mode: videoaip -c, configuration: videoaip -e" && exit
+    echo "Usage: videoaip [options] [inputfile1] [inputfile2] ... , help mode: videoaip -h, crop mode: videoaip -c, configuration: videoaip -e, add logs with -l file1.log -l file2.log etc" && exit
 }
 
 _cancel_option(){
