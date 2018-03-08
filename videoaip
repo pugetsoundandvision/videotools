@@ -208,7 +208,7 @@ while [ "${*}" != "" ] ; do
 
     #Run Bagit
     echo -e "\033[1;32mCreating Bag\033[0m"
-    bagit baginplace "$package"
+    bagit baginplace --excludehiddenfiles "$package"
 
     #sync AIP to destination
     if [[ "${sync_choice}" = "Y" ]] ; then
