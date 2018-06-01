@@ -5,7 +5,7 @@ touch "${config_file}"
 source "${config_file}"
 
 usage(){
-    echo "Usage: videoaip [options] [inputfile1] [inputfile2] ... , help mode: videoaip -h, crop mode: videoaip -c, configuration: videoaip -e, add logs with -l file1.log -l file2.log etc" && exit
+    echo "Usage: videoaip [options] [inputfile1] [inputfile2] ... , help mode: videoaip -h, crop mode: videoaip -c, configuration: videoaip -e, add logs with -l file1.log -l file2.log etc OR -l auto to add to AIP all .log and .framemd5 files in same directory as input[s]." && exit
 }
 
 _cancel_option(){
@@ -196,9 +196,32 @@ while [ "${*}" != "" ] ; do
     echo -e "\033[1;32mMoving Files into package\033[0m"
     rsync -av "$file_input" "${targetdirectory}/${mediaid}/objects"
     rsync -av --remove-source-files "$mp4_name" "${targetdirectory}/${mediaid}/objects/access"
-    for i in "${logfiles[@]}" ; do
-        rsync -av "${i}" "${targetdirectory}/${mediaid}/logs/"
-    done
+    
+    # either find all log files in same directory as input (auto) or add specified logfiles
+    if [ "${logfiles[0]}" = 'auto' ] ; then
+        unset logfiles
+        logfiles+=($(find "${targetdirectory}" -maxdepth 1 -iname *.log))
+        frame_md5=($(find "${targetdirectory}" -maxdepth 1 -iname *.framemd5))
+        for i in "${logfiles[@]}" ; do
+            rsync -av "${i}" "${targetdirectory}/${mediaid}/logs/"
+        done
+
+        for i in "${frame_md5[@]}" ; do
+            rsync -av "${i}" "${targetdirectory}/${mediaid}/metadata/"
+        done
+
+        unset logfiles
+        unset framemd5
+        logfiles+=('auto')
+    else
+        for i in "${logfiles[@]}" ; do
+            if [ ${i##*.} == 'framemd5' ] ; then
+                rsync -av "${i}" "${targetdirectory}/${mediaid}/metadata/"
+            else    
+                rsync -av "${i}" "${targetdirectory}/${mediaid}/logs/"
+            fi
+        done
+    fi
 
     package="${targetdirectory}/${mediaid}"
 
