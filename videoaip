@@ -5,7 +5,7 @@ touch "${config_file}"
 source "${config_file}"
 
 usage(){
-    echo "Usage: videoaip [options] [inputfile1] [inputfile2] ... , help mode: videoaip -h, crop mode: videoaip -c, configuration: videoaip -e, add logs with -l file1.log -l file2.log etc OR -l auto to add to AIP all .log and .framemd5 files in same directory as input" && exit
+    echo "Usage: videoaip [options] [inputfile1] [inputfile2] ... , help mode: videoaip -h, crop mode: videoaip -c, configuration: videoaip -e, add logs with -l file1.log -l file2.log etc OR -l auto to add to AIP all .log and .framemd5 files in same directory as input[s]." && exit
 }
 
 _cancel_option(){
