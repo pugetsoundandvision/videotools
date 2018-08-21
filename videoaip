@@ -94,11 +94,12 @@ while getopts "hec:l:" opt ; do
         *)
     esac
 done
-shift $((OPTIND -1))
 
 if [ "${*}" = "" ] ; then
     usage
 fi
+
+shift $((OPTIND -1))
 
 if [[ "${runtype}" = "edit" ]] ; then
     {
