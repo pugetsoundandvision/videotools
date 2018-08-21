@@ -101,7 +101,6 @@ fi
 
 shift $((OPTIND -1))
 
-
 if [[ "${runtype}" = "edit" ]] ; then
     {
     echo "#INSERT YOUR VALUES BETWEEN THE QUOTES AND SAVE FILE"
