@@ -52,7 +52,7 @@ If you have logs that are associated with your video files, such as .log or .fra
 
 OR
 
-`videoaip -l auto [drag each .mkv file path here, separated by spaces]
+`videoaip -l auto [drag each .mkv file path here, separated by spaces]`
 
 This will create an archival package, as above, but will include any logs found in the same folder as the .mkv.
 
