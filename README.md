@@ -4,7 +4,7 @@
 
 This script includes an option to sync package/access copies to a remote or local location for easy backup.
 
-Usage: `videoaip [option] [inputfile1] [inputfile2] ... `, help: `videoaip -h`, crop mode: `videoaip -c`,set up configuration for options `videoaip -e`
+Usage: `videoaip [option] [inputfile1] [inputfile2] ... `, help: `videoaip -h`, crop mode: `videoaip -c`, to include logs: `videoaip -l`, set up configuration for options `videoaip -e`
 
 **Installation:** To install and use these tools in Mac OSX, use the "Terminal" application located in the "Utilities" folder. Use Terminal to install Homebrew (if you don't have it already) and then run the commands:
 
@@ -48,7 +48,11 @@ This will create an archival package for each .mkv that adheres to the bagit sta
 
 If you have logs that are associated with your video files, such as .log or .framemd5 files, you can run:
 
-`videoaip -l auto [drag each .mkv file path here, separated by spaces]`
+`videoaip -l [drag each a log file here] -l [drag additional log here] -l [drag additional log here, etc.] [drag associated .mkv here]`
+
+OR
+
+`videoaip -l auto [drag each .mkv file path here, separated by spaces]
 
 This will create an archival package, as above, but will include any logs found in the same folder as the .mkv.
 
