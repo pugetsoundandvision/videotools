@@ -85,7 +85,7 @@ _error_exit(){
 }
 
 OPTIND=1
-while getopts "hec:l:" opt ; do
+while getopts "hecl:" opt ; do
     case "${opt}" in
         h) usage ;;
         e) runtype="edit";;
