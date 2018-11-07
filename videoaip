@@ -184,7 +184,7 @@ while [ "${*}" != "" ] ; do
         fi
     fi
     #sync access mp4 if selected
-    if [[ "${derivative_choice}" = "Y" ]] ; then
+    if [[ "${derivative_choice}" = [yY] ]] ; then
         echo -e "\033[1;32mSyncing access copy to "${derivative_destination}" \033[0m"
         if [ -d "${derivative_destination}" ] ; then
             rsync -Pa "$mp4_name" "${derivative_destination}"
@@ -235,7 +235,7 @@ while [ "${*}" != "" ] ; do
     bagit baginplace --excludehiddenfiles "$package"
 
     #sync AIP to destination
-    if [[ "${sync_choice}" = "Y" ]] ; then
+    if [[ "${sync_choice}" = [yY] ]] ; then
         for i in "${destination[@]}" ; do
             if [ -d "${i}" ] ; then
                 echo -e "\033[1;32mSyncing Files to  "${i}" \033[0m"
@@ -248,7 +248,7 @@ while [ "${*}" != "" ] ; do
                 SYNC_PROBLEM="1"
             fi
         done
-        if [ "${remove_aip}" = "Y" ] && [ -z "${SYNC_PROBLEM}" ]; then
+        if [ "${remove_aip}" = [yY] ] && [ -z "${SYNC_PROBLEM}" ]; then
             echo "Removing source AIP"
             rm -r "${package}"
         else
