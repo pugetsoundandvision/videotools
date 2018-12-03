@@ -81,7 +81,6 @@ _set_up_crop(){
 
 _error_exit(){
     echo -e "\033[1;32m"$1"\033[0m" 1>&2
-    continue
 }
 
 OPTIND=1
@@ -129,6 +128,7 @@ while [ "${*}" != "" ] ; do
 
     if [ ! -f "$file_input" ]; then
         _error_exit "Input could not be found. Please enter valid input."
+        continue
     fi
 
     #set variables
