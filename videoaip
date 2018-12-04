@@ -126,18 +126,18 @@ while [ "${*}" != "" ] ; do
     file_input="${1}"
     shift
 
-    if [ ! -f "$file_input" ]; then
+    if [ ! -f "${file_input}" ]; then
         _error_exit "Input could not be found. Please enter valid input."
         continue
     fi
 
     #set variables
-    orig_base=$(basename "$file_input")
+    orig_base=$(basename "${file_input}")
     mp4_name="${file_input%.*}.mp4"
     mediaid="${orig_base%.*}"
     targetdirectory=$(dirname "${file_input}")
     if [ "${mp4_name}" = "${file_input}" ] ; then
-    	no_deriv="1"
+        no_deriv="1"
     fi
 
     if [ -d "${targetdirectory}/${mediaid}" ] ; then
@@ -172,11 +172,13 @@ while [ "${*}" != "" ] ; do
     mkdir "${targetdirectory}/${mediaid}/logs"
     mkdir "${targetdirectory}/${mediaid}/logs/fileMeta"
     mkdir "${targetdirectory}/${mediaid}/objects"
-    mkdir "${targetdirectory}/${mediaid}/objects/access"
+    if ! [ "${no_deriv}" = "1" ] ; then
+        mkdir "${targetdirectory}/${mediaid}/objects/access"
+    fi
 
     #create metadata and derivative files
-    mediainfo --output=XML "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
-    mediainfo "$file_input" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
+    mediainfo --output=XML "${file_input}" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.xml"
+    mediainfo "${file_input}" > "${targetdirectory}/${mediaid}/logs/fileMeta/${mediaid}.txt"
     if ! [ -e "${mp4_name}" ] ; then
         ffmpeg ${STARTTRIMOPT} -i "${file_input}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -preset fast -crf 18 -c:a aac -ar 48k -b:a 128k -vf yadif=deint=1"${cropoptions}" ${ENDTRIMOPT} "$mp4_name" 2>&1 | tee "${targetdirectory}/${mediaid}/logs/${mediaid}_mp4.log"
         if [ "${?}" -ne 0 ] ; then
@@ -198,8 +200,10 @@ while [ "${*}" != "" ] ; do
 
     #move files
     echo -e "\033[1;32mMoving Files into package\033[0m"
-    rsync -av "$file_input" "${targetdirectory}/${mediaid}/objects"
-    rsync -av --remove-source-files "${mp4_name}" "${targetdirectory}/${mediaid}/objects/access"
+    rsync -av "${file_input}" "${targetdirectory}/${mediaid}/objects"
+    if ! [ "${no_deriv}" = "1" ] ; then
+        rsync -av --remove-source-files "${mp4_name}" "${targetdirectory}/${mediaid}/objects/access"
+    fi
     
     # either find all log files in same directory as input (auto) or add specified logfiles
     if [ "${logfiles[0]}" = 'auto' ] ; then
