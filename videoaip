@@ -85,11 +85,12 @@ _error_exit(){
 }
 
 OPTIND=1
-while getopts "hecl:" opt ; do
+while getopts "hecxl:" opt ; do
     case "${opt}" in
         h) usage ;;
         e) runtype="edit";;
         c) runtype="crop";;
+		x) hiddenFiles="preserve";;
         l) logfiles+=("${OPTARG}");;
         *)
     esac
@@ -232,14 +233,24 @@ while [ "${*}" != "" ] ; do
 
     #Run Bagit
     echo -e "\033[1;32mCreating Bag\033[0m"
-    bagit baginplace --excludehiddenfiles "$package"
+    if [ "${hiddenFiles}" = 'preserve' ] ; then
+        bagit baginplace "$package"
+    else
+        find "$package" -type f -iname ".*" -exec rm -f {} \;
+        bagit baginplace --excludehiddenfiles "$package"
+    fi
+    bagit baginplace "$package"
 
     #sync AIP to destination
     if [[ "${sync_choice}" = [yY] ]] ; then
         for i in "${destination[@]}" ; do
             if [ -d "${i}" ] ; then
                 echo -e "\033[1;32mSyncing Files to  "${i}" \033[0m"
-                rsync -Pa "$package" "${i}"
+                if [ "${hiddenFiles}" = 'preserve' ] ; then
+                    rsync -Pa "$package" "${i}"
+                else
+                    rsync -Pa --exclude ".*" "$package" "${i}"
+                fi
                 if ! [ "${?}" = "0" ] ; then
                     SYNC_PROBLEM="1"
                 fi
