@@ -81,7 +81,6 @@ _set_up_crop(){
 
 _error_exit(){
     echo -e "\033[1;32m"$1"\033[0m" 1>&2
-    continue
 }
 
 OPTIND=1
@@ -128,8 +127,9 @@ while [ "${*}" != "" ] ; do
     file_input="${1}"
     shift
 
-    if [ ! -f "$file_input" ]; then
-        _error_exit "Input could not be found. Please enter valid input."
+    if [ ! -f "${file_input}" ]; then
+        _error_exit "Input: ${file_input} could not be found. Please enter valid input."
+        continue
     fi
 
     #set variables
@@ -140,6 +140,7 @@ while [ "${*}" != "" ] ; do
 
     if [ -d "${targetdirectory}/${mediaid}" ] ; then
         _error_exit "Directory already exists. Exiting..."
+        continue
     fi
 
     #crop mode
@@ -165,7 +166,7 @@ while [ "${*}" != "" ] ; do
     fi
 
     #create directory structure
-    mkdir "${targetdirectory}/${mediaid}" || _error_exit "Directory already exists. Exiting..."
+    mkdir "${targetdirectory}/${mediaid}" || ( _error_exit "Directory already exists. Exiting..." && continue )
     mkdir "${targetdirectory}/${mediaid}/metadata"
     mkdir "${targetdirectory}/${mediaid}/logs"
     mkdir "${targetdirectory}/${mediaid}/logs/fileMeta"
