@@ -260,7 +260,7 @@ while [ "${*}" != "" ] ; do
                 SYNC_PROBLEM="1"
             fi
         done
-        if [ "${remove_aip}" = [yY] ] && [ -z "${SYNC_PROBLEM}" ]; then
+        if [[ "${remove_aip}" = [yY] ]] && [[ -z "${SYNC_PROBLEM}" ]] ; then
             echo "Removing source AIP"
             rm -r "${package}"
         else
