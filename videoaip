@@ -89,7 +89,7 @@ while getopts "hecxl:" opt ; do
         h) usage ;;
         e) runtype="edit";;
         c) runtype="crop";;
-		x) hiddenFiles="preserve";;
+	x) hiddenFiles="preserve";;
         l) logfiles+=("${OPTARG}");;
         *)
     esac
