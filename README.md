@@ -22,39 +22,29 @@ When you run `videoaip -e` you will see the following configuration screen:
 
 ![Video AIP Config](https://github.com/pugetsoundandvision/audiotools/blob/master/supplemental/VideoAIP_Config.png)
 
-* Option One is to enable synchronizing (copying) your preservation package to a second location. Enable this option by entering `Y` for `sync_choice` (between quotation marks) and a path after `destination` (between parenthesis).
+* Option One is to enable synchronizing your preservation package to a second location. Enable this option by entering `Y` for `sync_choice` (between quotation marks) and a path after `destination` (between parenthesis).
 
 * Option Two: VideoAIP will still create a preservation package at the same location as the original file, even if you have enabled synchronization in Option One. If you wish to delete this package once a copy has been synced to the destination specified above, enter `Y` after `remove_aip`.
 
-* Option Three allows you to specify a location for an additional copy of your access files. This enables you to have copies of all access files added to one central folder for more easy management. Enable this by entering `Y` and a path (or ssh path) following `derivative_destination`.
-
-Example:
-
-Original .MKVs are on HardDrive_A. We want the preservation packages synced to HardDrive_B, and copies of the access files saved to HardDrive_C. We also want the preservation packages on HardDrive_A to be deleted once they are synced to HardDrive_B.
-
-![VideoAIP Example](https://github.com/pugetsoundandvision/audiotools/blob/master/supplemental/VideoAIP_Example_GitHub.png)
+* Option Three allows you to specify a location to sync an additional copy of your access files. Enable this by entering `Y` and a path (or ssh path) following `derivative_destination`.
 
 **Creating Preservation Packages:**
 
 Before you begin:
 
-* Each video file and it's associated logs should be together in one folder. (I.e., FileA.mkv, LogA.log, FrameA.framemd5 should all be in "FileA" folder).
+* Each video file and it's associated logs should be together in one folder. (I.e., FileA.mkv, FileA.log, FileA.framemd5 should all be in "FileA" folder).
 
 If you only have video files, you can simply run:
 
-`videoaip [drag each .mkv file path here, separated by spaces]`
+`videoaip [drag each video file path here, separated by spaces]`
 
-This will create an archival package for each .mkv that adheres to the bagit standard with an mp4 access file, technical metadata, and checksums.
+This will create an archival package for each file that adheres to the bagit standard with an mp4 access file, technical metadata, and checksums.
 
 If you have logs that are associated with your video files, such as .log or .framemd5 files, you can run:
 
-`videoaip -l [drag each a log file here] -l [drag additional log here] -l [drag additional log here, etc.] [drag associated .mkv here]`
+`videoaip -l auto [drag each video file path here, separated by spaces]`
 
-OR
-
-`videoaip -l auto [drag each .mkv file path here, separated by spaces]`
-
-This will create an archival package, as above, but will include any logs found in the same folder as the .mkv.
+This will create an archival package, as above, but will include any logs found in the same folder as the video file.
 
 ## Licenses
 
