@@ -235,12 +235,11 @@ while [ "${*}" != "" ] ; do
     #Run Bagit
     echo -e "\033[1;32mCreating Bag\033[0m"
     if [ "${hiddenFiles}" = 'preserve' ] ; then
-        bagit baginplace "$package"
+        bagit.py --md5 "$package"
     else
         find "$package" -type f -iname ".*" -exec rm -f {} \;
-        bagit baginplace --excludehiddenfiles "$package"
+        bagit.py --md5 "$package"
     fi
-    bagit baginplace "$package"
 
     #sync AIP to destination
     if [[ "${sync_choice}" = [yY] ]] ; then
