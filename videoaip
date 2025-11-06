@@ -203,18 +203,25 @@ while [ "${*}" != "" ] ; do
     # either find all log files in same directory as input (auto) or add specified logfiles
     if [ "${logfiles[0]}" = 'auto' ] ; then
         unset logfiles
-        logfiles+=($(find "${targetdirectory}" -maxdepth 1 -iname "*.log"))
-        frame_md5=($(find "${targetdirectory}" -maxdepth 1 -iname "*.framemd5"))
+        logfiles+=($(find "${targetdirectory}" -maxdepth 1 \( -iname "*.log" -o -iname "*.xml" -o -iname "*.html" \)))
+        metadata_files=($(find "${targetdirectory}" -maxdepth 1 -iname "*.framemd5"))
+        subtitles=($(find "${targetdirectory}" -maxdepth 1 \( -iname "*data.txt" -o -iname "*.scc" \)))
+
         for i in "${logfiles[@]}" ; do
             rsync -av "${i}" "${targetdirectory}/${mediaid}/logs/"
         done
 
-        for i in "${frame_md5[@]}" ; do
+        for i in "${metadata_files[@]}" ; do
             rsync -av "${i}" "${targetdirectory}/${mediaid}/metadata/"
         done
 
+		for i in "${subtitles[@]}" ; do
+			rsync -av "${i}" "${targetdirectory}/${mediaid}/metadata/"
+		done
+
         unset logfiles
-        unset framemd5
+        unset metdata_files
+        unset subtitles
         logfiles+=('auto')
     else
         for i in "${logfiles[@]}" ; do
